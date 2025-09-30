@@ -5,7 +5,6 @@ import os
 from moviepy import AudioClip
 
 magic = b"Audio   "
-supportedAudio = set([".mp3",".wav",".aac",".webm",".flac",".mp1",".mp2"])
 
 def tryEncodeAudio(inCover : AudioClip, inSecret : AudioClip):
     def new_frame(t):
@@ -32,6 +31,7 @@ def decodeAudio(inSecret : AudioClip):
     
 cover = moviepy.AudioFileClip(r"TestFile\music.mp3")
 secret = moviepy.AudioFileClip(r"TestFile\#1 bedwars trap.mp4")
+# the resulting audio is different from what is expected
 tryEncodeAudio(cover, secret).write_audiofile(r"Result\Hello.mp3", nbytes = 4, bitrate = "3000K")
 enc = moviepy.AudioFileClip(r"Result\Hello.mp3")
 decodeAudio(enc).write_audiofile(r"Result\decode.mp3")
