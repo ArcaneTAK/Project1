@@ -27,9 +27,9 @@ def decodeAudio(inSecret : AudioClip):
         
     return AudioClip(new_frame, inSecret.duration, inSecret.fps)
     
-cover = moviepy.AudioFileClip(r"TestFile\music.mp3")
-secret = moviepy.AudioFileClip(r"TestFile\#1 bedwars trap.mp4")
-# the resulting audio is different from what is expected
-tryEncodeAudio(cover, secret).write_audiofile(r"Result\Hello.mp3", nbytes = 4, bitrate = "3000K")
-enc = moviepy.AudioFileClip(r"Result\Hello.mp3")
-decodeAudio(enc).write_audiofile(r"Result\decode.mp3")
+# cover = moviepy.AudioFileClip(r"TestFile\music.mp3")
+# secret = moviepy.AudioFileClip(r"TestFile\#1 bedwars trap.mp4")
+# # the resulting audio is different from what is expected
+# tryEncodeAudio(cover, secret).write_audiofile(r"Result\Hello.mp3", nbytes = 4, bitrate = "3000K")
+# enc = moviepy.AudioFileClip(r"Result\Hello.mp3")
+# decodeAudio(enc).write_audiofile(r"Result\decode.mp3")
