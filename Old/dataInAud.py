@@ -67,6 +67,6 @@ def revealInAudio(coverAudio: AudioClip) -> bytes:
 
 # cover = moviepy.AudioFileClip(r"TestFile\music.mp3")
 # hideInAudio(cover, b"Hello World").write_audiofile(r"Result\Hello.mp4", nbytes = 4, codec = "flac")
-enc = moviepy.AudioFileClip(r"Result\Hello.mp4", nbytes=4)
-data = revealInAudio(enc)
-print(data)
+# enc = moviepy.AudioFileClip(r"Result\Hello.mp4", nbytes=4)
+# data = revealInAudio(enc)
+# print(data)

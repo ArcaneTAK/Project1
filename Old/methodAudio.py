@@ -46,3 +46,10 @@ def fileAudioStack(inCovVid : str, inSec : str, outfile : str):
 def fileAudioUnstack(inVid : str, outfile : str):
     enc = mp.AudioFileClip(inVid, nbytes=4)
     unstackAudio(enc).write_audiofile(outfile, nbytes = 4, codec = "flac")
+
+# cover = moviepy.AudioFileClip(r"TestFile\music.mp3")
+# secret = moviepy.AudioFileClip(r"TestFile\#1 bedwars trap.mp4")
+# # the resulting audio is different from what is expected
+# tryEncodeAudio(cover, secret).write_audiofile(r"Result\Hello.mp3", nbytes = 4, bitrate = "3000K")
+# enc = moviepy.AudioFileClip(r"Result\Hello.mp3")
+# decodeAudio(enc).write_audiofile(r"Result\decode.mp3")
