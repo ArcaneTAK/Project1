@@ -1,35 +1,48 @@
-from typing import *
-import moviepy
 import numpy as np
-import os
 from moviepy import AudioClip
+import moviepy as mp
+def stackAudio(coverAudio : AudioClip, secretAudio : AudioClip):
+    """StackAudio
 
-def tryEncodeAudio(inCover : AudioClip, inSecret : AudioClip):
+    The written audio have to be lossless. If cover Audio is shorter than secret, than secret will be cut.
+    """
+    secretAudio = secretAudio.with_duration(duration = coverAudio.duration)
     def new_frame(t):
-        cov = np.array(inCover.get_frame(t), dtype=np.float32)
+        covFrame = coverAudio.get_frame(t)
+        if len(covFrame.shape) != 1:
+            covFrame = covFrame[:,0]
         try:
-            sec = np.array(inSecret.get_frame(t), dtype=np.float32)
-            diff = len(cov) - len(sec)
-            sec = np.pad(sec, (0,diff),"constant",constant_values=0)
+            sec = secretAudio.get_frame(t)
+            if len(sec.shape) != 1:
+                sec = sec[:,0]
+            diff = len(covFrame) - len(sec)
+            sec = np.pad(sec, (0,diff), "constant", constant_values=0)
         except:
-            sec = np.zeros(len(cov))
-        sec = np.frombuffer(sec.tobytes(), dtype=np.uint32) & 0xff000000 # take 8msb
-        cov = np.frombuffer(cov.tobytes(), dtype=np.uint32) & 0xff000000 # take 8msb
-        new = cov | (sec >> 8)
-        return np.frombuffer(new.tobytes(), dtype=np.float32)
-    return AudioClip(new_frame, inCover.duration, inCover.fps)
+            sec = np.zeros(len(covFrame))
+        sec = np.frombuffer(sec.tobytes(), dtype=np.uint64) & 0xffff000000000000 # take 16msb
+        covFrame = np.frombuffer(covFrame.tobytes(), dtype=np.uint64) & 0xffff000000000000 # take 16msb
+        new = covFrame | (sec >> 16)
+        res = np.frombuffer(new.tobytes(), dtype=np.float64)
+        return np.column_stack([res,res])
+    return AudioClip(new_frame, coverAudio.duration, coverAudio.fps)
 
-def decodeAudio(inSecret : AudioClip):
+def unstackAudio(inSecret : AudioClip):
     def new_frame(t):
-        sec = np.array(inSecret.get_frame(t), dtype=np.float32).tobytes()
-        sec = (np.frombuffer(sec, dtype=np.uint32) & 0x00ff0000) << 8
-        return np.frombuffer(sec.tobytes(), dtype=np.float32)
-        
+        sec = np.array(inSecret.get_frame(t), dtype=np.float64).tobytes()
+        sec = (np.frombuffer(sec, dtype=np.uint64) & 0x0000ffff00000000) << 16
+        return np.frombuffer(sec.tobytes(), dtype=np.float64)
     return AudioClip(new_frame, inSecret.duration, inSecret.fps)
+
+def fileAudioStack(inCovVid : str, inSec : str, outfile : str):
+    secret = mp.AudioFileClip(inSec)
+    cover = mp.VideoFileClip(inCovVid)
+    if cover.audio == None:
+        raise ValueError("Video must have sound")
+    new : mp.VideoClip = cover.with_audio(stackAudio(cover.audio, secret))
+    new.write_videofile(filename = outfile,audio_codec = "flac", audio_nbytes = 4)
+    secret.close()
+    cover.close()
     
-cover = moviepy.AudioFileClip(r"TestFile\music.mp3")
-secret = moviepy.AudioFileClip(r"TestFile\#1 bedwars trap.mp4")
-# the resulting audio is different from what is expected
-tryEncodeAudio(cover, secret).write_audiofile(r"Result\Hello.mp3", nbytes = 4, bitrate = "3000K")
-enc = moviepy.AudioFileClip(r"Result\Hello.mp3")
-decodeAudio(enc).write_audiofile(r"Result\decode.mp3")
+def fileAudioUnstack(inVid : str, outfile : str):
+    enc = mp.AudioFileClip(inVid, nbytes=4)
+    unstackAudio(enc).write_audiofile(outfile, nbytes = 4, codec = "flac")

@@ -43,4 +43,5 @@ def fileAudioStack(inCovVid : str, inSec : str, outfile : str):
     
 def fileAudioUnstack(inVid : str, outfile : str):
     enc = mp.AudioFileClip(inVid, nbytes=4)
-    unstackAudio(enc).write_audiofile(outfile, nbytes = 4, codec = "flac")
+    unstackAudio(enc).write_audiofile(outfile, nbytes = 4)
+    enc.close()

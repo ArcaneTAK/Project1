@@ -1,5 +1,5 @@
-from methodEoF import hideEoF, revealEoF
-from methodAudio import fileAudioStack, fileAudioUnstack
+from loremsteg.methodEof import hideEoF, revealEoF
+from loremsteg.methodAudio import fileAudioStack, fileAudioUnstack
 import sys
 def main():
     method = input("Choose: 1. EoF with encryption; 2. Audio stacking")

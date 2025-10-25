@@ -33,7 +33,7 @@ def takeEoF(inFilePath : str, remove : bool) -> bytes:
     return data
 
 def hideEoF(inFilePath : str, outFilePath : str, data : bytes, key : bytes):
-    with open(outFilePath, "r+b") as o_file:
+    with open(outFilePath, "wb") as o_file:
         if inFilePath != outFilePath:
             i_file = open(inFilePath, "rb")
             o_file.write(i_file.read())

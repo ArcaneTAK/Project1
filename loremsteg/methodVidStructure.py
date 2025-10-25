@@ -26,6 +26,7 @@ def split_str(main_str, substr_cnt):
     return substr_ls
 
 
+def scramble(binary_data, scramble_ls, delimiter='\\xxx'):
     substr_ls = split_str(binary_data, len(scramble_ls))
     return b''.join((delimiter.encode() + substr_ls[i]) for i in scramble_ls)
 
@@ -45,7 +46,7 @@ def get_scramble_ls(binary_data, position, size):
     return scramble_ls, binary_data[:position] + binary_data[position + size:]
 
 
-def encrypt_file(data, scramble_ls=[], position=-1):
+def encrypt_file(data, scramble_ls=[]):
     key = get_random_bytes(16)
     iv = get_random_bytes(16)
     cipher = AES.new(key, AES.MODE_CBC, iv)
@@ -53,7 +54,7 @@ def encrypt_file(data, scramble_ls=[], position=-1):
     encrypted = cipher.encrypt(padded)
 
     scramble_size = 0
-    position = position if position >= 0 else random.randint(0, len(data) - 1)
+    position = random.randint(0, len(data) - 1)
     if len(scramble_ls) > 0:
         encrypted = scramble(encrypted, scramble_ls)
         scramble_size, encrypted = hide_scramble_ls(encrypted, scramble_ls, position)
@@ -67,8 +68,6 @@ def encrypt_file(data, scramble_ls=[], position=-1):
     with open('key.pkl', 'wb') as f:
         pickle.dump(key_dict, f)
     print('Key file saved: \'key.pkl\'. DO NOT LOSE THIS FILE!')
-
-    print(len(encrypted))
 
     return encrypted
 
@@ -139,15 +138,25 @@ def inspect(path):
             f.seek(start + b_size)
 
 
-def hide_free_box(path, secret):
-    with open('output.mp4', 'wb') as f:
+def hide_free_box(path, secret, save_path):
+    with open(save_path, 'wb') as f:
         with open(path, 'rb+') as i:
             frees = parse_boxes(path, ['free'])
+            # frees = parse_boxes(path, ['free', 'moof'])
+
             for free in frees:
+                # if free == 'moof':
+                #     continue
                 i.seek(free['box_start'] + 4)
                 i.write(b'moof')
             i.seek(0)
             f.write(i.read())
+
+            # if 'moof' not in frees:
+            #     moofs = parse_boxes(path, ['moov'])
+            #     for moof in moofs:
+            #         i.seek(moof['box_start'] + 4)
+            #         i.write(b'free')
 
         with open(secret, 'rb') as s:
             data = s.read()
@@ -156,8 +165,7 @@ def hide_free_box(path, secret):
             substr_cnt = int(input('How many segments do you want to split this data to, for scrambling? (Type 0 if you don\'t want to scramble): '))
             scramble_ls = list(range(substr_cnt))
             random.shuffle(scramble_ls)
-            scramble_pos = int(input(f'Choose a position to hide your data (From 0 to {len(data) - 1}, type -1 if you want to randomize): '))
-            data = encrypt_file(data, scramble_ls, scramble_pos)
+            data = encrypt_file(data, scramble_ls)
         
             if len(data) + 8 > 0xFFFFFFFF:
                 f.write((1).to_bytes(4, 'big'))
@@ -170,7 +178,7 @@ def hide_free_box(path, secret):
             f.write(data)
 
 
-def reveal_free_box(path, save_file):
+def reveal_free_box(path, save_path):
     data = b''
     frees = parse_boxes(path, ['free'])
     with open(path, 'rb') as f:
@@ -181,41 +189,8 @@ def reveal_free_box(path, save_file):
     if len(data) == 0:
         print('Nothing to find')
     else:
-        with open(f'{save_file}', 'wb') as s:
+        with open(save_path, 'wb') as s:
             key_file = input('Enter yout key file (.pkl file): ')
             data = decrypt_file(data, key_file)
 
             s.write(data)
-
-
-if __name__ == '__main__':
-    while 1:
-            mode = int(input('''
-            |||WELCOME TO LOREM IPSUM STEGANOGRAPHY APP|||
-            What do you want to do?
-                0. Exit
-                1. Inspect boxes
-                2. Hida data in video
-                3. Reveal data in video
-            '''))
-            if mode == 0:
-                break
-            else:
-                try:
-                    if mode == 1:
-                        cover = input('Select your video to inspect: ')
-                        inspect(cover)
-                    elif mode == 2:
-                        cover = input('Select your cover video: ')
-                        secret = input('Select your secret data: ')
-                        hide_free_box(cover, secret)
-                        print('Finished hiding!')
-                    elif mode == 3:
-                        cover = input('Select your cover video: ')
-                        secret = input('Type your secret file\'s name (including your file header, eg. \'.mp4\'): ')
-                        reveal_free_box(cover, secret)
-                        print('Finished revealing!')
-                    else:
-                        print('Error: Invalid syntax, try again.')
-                except FileNotFoundError:
-                    print('Error: File not found. Please try with another file.')
